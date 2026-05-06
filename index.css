@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: #fbfbfd; 
+    color: #1d1d1f; 
+}
+
+/* --- Glassmorphism --- */
+.glass { 
+    background: rgba(255, 255, 255, 0.7); 
+    backdrop-filter: blur(20px); 
+    -webkit-backdrop-filter: blur(20px); 
+}
+
+/* --- Анимациялар --- */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-wow {
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.animate-float {
+    animation: float 4s ease-in-out infinite;
+}
+
+/* --- Карточкалар --- */
+.item-card { 
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+    background: white;
+}
+
+.item-card:hover { 
+    transform: translateY(-10px); 
+    box-shadow: 0 30px 60px rgba(0,0,0,0.08); 
+}
+
+/* --- Батырмалар --- */
+.btn-icon {
+    padding: 10px;
+    border-radius: 14px;
+    color: #94a3b8;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: #f1f5f9;
+    color: #6366f1;
+}
+
+/* Лайк басылғандағы стиль */
+.like-btn.active {
+    color: #ef4444 !important;
+}
+.like-btn.active svg {
+    fill: #ef4444;
+}
+
+/* --- Модаль --- */
+.modal-content { 
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -45%) scale(0.9);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+    opacity: 0;
+    visibility: hidden;
+}
+
+.modal-content.active { 
+    transform: translate(-50%, -50%) scale(1); 
+    opacity: 1;
+    visibility: visible;
+}
+
+.hide-scroll::-webkit-scrollbar { display: none; }

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кіру | Visual Finder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Montserrat:wght@900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: radial-gradient(circle at top left, #eef2ff, #f8fafc);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    
+    <div class="fixed top-0 -left-4 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+    <div class="fixed bottom-0 -right-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+
+    <div class="max-w-md w-full glass p-8 md:p-12 rounded-[2.5rem] shadow-2xl relative z-10">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-black text-gray-900 mb-2 tracking-tight uppercase italic" style="font-family: 'Montserrat';">
+                Visual<span class="text-indigo-600">Finder</span>
+            </h1>
+            <div class="h-1 w-12 bg-indigo-600 mx-auto rounded-full mb-4"></div>
+            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">Авторизация жүйесі</p>
+        </div>
+        
+        <form class="space-y-6" onsubmit="return false;">
+            <div class="group">
+                <label class="text-[11px] font-extrabold uppercase text-gray-400 ml-1 mb-2 block transition-colors group-focus-within:text-indigo-600">
+                    Толық атыңыз
+                </label>
+                <input type="text" id="loginName" placeholder="Азамат Азаматов" 
+                    class="w-full px-6 py-4 rounded-2xl bg-white/50 border border-gray-100 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold text-gray-700 placeholder:text-gray-300">
+            </div>
+
+            <div class="group">
+                <label class="text-[11px] font-extrabold uppercase text-gray-400 ml-1 mb-2 block transition-colors group-focus-within:text-indigo-600">
+                    ИИН (12 сан)
+                </label>
+                <input type="text" id="loginIIN" maxlength="12" placeholder="000000000000" 
+                    class="w-full px-6 py-4 rounded-2xl bg-white/50 border border-gray-100 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-gray-700 tracking-[0.2em] placeholder:text-gray-200">
+            </div>
+            
+            <button type="button" onclick="login()" 
+                class="w-full py-5 bg-gray-900 text-white rounded-2xl font-bold text-sm uppercase tracking-widest shadow-xl hover:bg-indigo-600 hover:shadow-indigo-500/25 transition-all duration-300 active:scale-[0.98] mt-4">
+                Жүйеге кіру
+            </button>
+        </form>
+
+        <p class="mt-8 text-center text-gray-400 text-xs">
+            Көмек қажет пе? <a href="#" class="text-indigo-600 font-bold hover:underline">Қолдау қызметі</a>
+        </p>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>

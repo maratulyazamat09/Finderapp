@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="kk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль | Visual Finder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #f8fafc;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .tab-active {
+            border-bottom: 4px solid #6366f1;
+            color: #6366f1;
+        }
+
+        .hide-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .post-card {
+            transition: transform 0.3s ease;
+        }
+
+        .post-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+
+<body class="p-6 pb-24">
+    <div class="max-w-5xl mx-auto">
+
+        <div class="flex justify-between items-center mb-10">
+            <button onclick="window.location.href='index.html'"
+                class="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                <span class="text-lg">←</span> Артқа
+            </button>
+            <button onclick="logout()"
+                class="text-[10px] font-black text-red-500 uppercase bg-red-50 px-6 py-3 rounded-2xl hover:bg-red-100 transition-colors">
+                Шығу 🚪
+            </button>
+        </div>
+
+        <div class="bg-white p-10 rounded-[3rem] text-center mb-10 shadow-sm border border-gray-100">
+            <div
+                class="w-32 h-32 rounded-full bg-indigo-600 mx-auto mb-6 flex items-center justify-center text-4xl text-white font-black border-4 border-white shadow-xl overflow-hidden relative group">
+                <img id="avatarImg" class="w-full h-full object-cover hidden">
+                <span id="avatarLetter">?</span>
+                <div
+                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs text-white uppercase font-bold cursor-pointer">
+                    <label for="avatarInput" class="cursor-pointer">Өзгерту</label>
+                </div>
+            </div>
+
+            <h2 id="prof-name" class="text-2xl font-black text-gray-800 uppercase tracking-tighter">...</h2>
+            <p id="prof-id" class="text-gray-400 font-bold text-[10px] uppercase mt-2">ID: Жүктелуде...</p>
+
+            <input type="file" id="avatarInput" class="hidden" accept="image/*" onchange="uploadAvatar(this)">
+            <label for="avatarInput"
+                class="mt-6 inline-block text-indigo-600 font-black text-[10px] uppercase cursor-pointer bg-indigo-50 px-8 py-4 rounded-full hover:bg-indigo-100 transition-all">
+                Фотоны жаңарту
+            </label>
+        </div>
+
+        <div class="flex gap-8 mb-10 border-b border-gray-100">
+            <button onclick="switchTab('my')" id="tab-my"
+                class="pb-4 font-black text-[10px] uppercase tab-active transition-all">Менің посттарым</button>
+            <button onclick="switchTab('fav')" id="tab-fav"
+                class="pb-4 font-black text-[10px] uppercase text-gray-400 transition-all">Таңдаулылар</button>
+        </div>
+
+        <div id="myPostsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        </div>
+        <div id="favoritesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hidden">
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Профиль деректерін толтыру
+        function initProfile() {
+            if (!currentUser) return;
+            document.getElementById('prof-name').innerText = currentUser.name;
+            document.getElementById('prof-id').innerText = `ID: ${currentUser.id.substring(0, 8)}...`;
+
+            const avImg = document.getElementById('avatarImg');
+            const avLet = document.getElementById('avatarLetter');
+
+            if (currentUser.avatar_url) {
+                avImg.src = currentUser.avatar_url;
+                avImg.classList.remove('hidden');
+                avLet.classList.add('hidden');
+            } else {
+                avLet.innerText = currentUser.name[0].toUpperCase();
+            }
+        }
+
+        // Профильдегі посттарды экранға шығару функциясы
+        function renderProfileGrid(items, elementId) {
+            const grid = document.getElementById(elementId);
+            if (!grid) return;
+
+            if (!items || items.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 font-bold uppercase text-[10px] tracking-widest">Әзірге бос...</div>`;
+                return;
+            }
+
+            grid.innerHTML = items.map(item => `
+        <div class="item-card bg-white p-4 rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+            <div class="w-full h-48 bg-slate-100 rounded-[1.5rem] mb-4 overflow-hidden relative">
+                <img src="${item.image_url}" class="w-full h-full object-cover">
+            </div>
+            <h3 class="font-black text-lg mb-1 text-slate-900 truncate">${item.title}</h3>
+            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-4 italic">${item.location || 'Белгісіз жер'}</p>
+            
+            <div class="flex items-center justify-between border-t pt-4">
+                <span class="text-[9px] font-black text-indigo-600 uppercase">Жарияланды: ${new Date(item.created_at).toLocaleDateString()}</span>
+                ${elementId === 'myPostsGrid' ?
+                    `<button onclick="deletePost('${item.id}')" class="text-red-500 hover:scale-110 transition-transform">🗑️</button>` : ''}
+            </div>
+        </div>
+    `).join('');
+        }
+
+        // 1. Менің посттарымды жүктеу
+        async function loadMyPosts() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('items')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                renderProfileGrid(data, 'myPostsGrid');
+            } catch (err) {
+                console.error("Посттарды жүктеу қатесі:", err);
+            }
+        }
+
+        // 2. Таңдаулыларды (лайктарды) жүктеу
+        async function loadFavorites() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('favorites')
+                    .select('items (*)') // favorites кестесі арқылы items кестесін қоса алу
+                    .eq('user_id', currentUser.id);
+
+                if (error) throw error;
+
+                // items деректерін тазалап алу
+                const items = data.map(f => f.items).filter(i => i !== null);
+                renderProfileGrid(items, 'favoritesGrid');
+            } catch (err) {
+                console.error("Таңдаулыларды жүктеу қатесі:", err);
+            }
+        }
+
+        // Постты өшіру функциясы (тек өз посттарың үшін)
+        async function deletePost(postId) {
+            if (!confirm("Бұл жазбаны өшіргіңіз келе ме?")) return;
+
+            const { error } = await supabaseClient
+                .from('items')
+                .delete()
+                .eq('id', postId);
+
+            if (error) alert("Өшіру мүмкін болмады");
+            else loadMyPosts();
+        }
+
+        // Бет жүктелгенде "Менің посттарымды" бірден көрсету
+        window.addEventListener('DOMContentLoaded', () => {
+            initProfile();
+            loadMyPosts();
+        });
+
+        // Табтарды ауыстыру
+        function switchTab(type) {
+            const myGrid = document.getElementById('myPostsGrid');
+            const favGrid = document.getElementById('favoritesGrid');
+            const myTab = document.getElementById('tab-my');
+            const favTab = document.getElementById('tab-fav');
+
+            if (type === 'my') {
+                myGrid.classList.remove('hidden');
+                favGrid.classList.add('hidden');
+                myTab.classList.add('tab-active');
+                favTab.classList.remove('tab-active');
+                favTab.classList.add('text-gray-400');
+                loadMyPosts();
+            } else {
+                myGrid.classList.add('hidden');
+                favGrid.classList.remove('hidden');
+                favTab.classList.add('tab-active');
+                myTab.classList.remove('tab-active');
+                myTab.classList.add('text-gray-400');
+                loadFavorites();
+            }
+        }
+
+        // Аватар жүктеу функциясы
+        async function uploadAvatar(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            try {
+                const fileName = `avatar_${currentUser.id}_${Date.now()}`;
+
+                // 1. Storage-қа жүктеу
+                const { data, error } = await supabaseClient.storage
+                    .from('item-images') // Немесе 'avatars' деп аталатын басқа bucket болса соны жаз
+                    .upload(fileName, file);
+
+                if (error) throw error;
+
+                // 2. URL алу
+                const { data: urlData } = supabaseClient.storage
+                    .from('item-images')
+                    .getPublicUrl(fileName);
+
+                const newAvatarUrl = urlData.publicUrl;
+
+                // 3. Users кестесінде жаңарту (Егер users кестең болса)
+                await supabaseClient
+                    .from('users')
+                    .update({ avatar_url: newAvatarUrl })
+                    .eq('id', currentUser.id);
+
+                // 4. LocalStorage жаңарту
+                currentUser.avatar_url = newAvatarUrl;
+                localStorage.setItem('finder_user', JSON.stringify(currentUser));
+
+                alert("Аватар сәтті жаңартылды!");
+                location.reload();
+
+            } catch (err) {
+                console.error(err);
+                alert("Қате: " + err.message);
+            }
+        }
+
+        // Бет жүктелгенде іске қосу
+        window.addEventListener('DOMContentLoaded', initProfile);
+    </script>
+</body>
+
+</html>

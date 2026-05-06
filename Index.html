@@ -1,0 +1,341 @@
+    <!DOCTYPE html>
+    <html lang="kk">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>VisualFinder | Premium School Edition</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet">
+        <style>
+            body {
+                font-family: 'Plus Jakarta Sans', sans-serif;
+                background-color: #f8fafc;
+                color: #0f172a;
+            }
+
+            .glass-nav {
+                background: rgba(255, 255, 255, 0.8);
+                backdrop-filter: blur(12px);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            }
+
+            .items-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                gap: 24px;
+            }
+
+            .item-card {
+                background: white;
+                border-radius: 24px;
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                border: 1px solid rgba(0, 0, 0, 0.04);
+                overflow: hidden;
+            }
+
+            .item-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 25px 30px -10px rgba(0, 0, 0, 0.1);
+            }
+
+            .modal-blur {
+                backdrop-filter: blur(8px);
+                background: rgba(15, 23, 42, 0.4);
+            }
+
+            .hide-scroll::-webkit-scrollbar {
+                display: none;
+            }
+
+            .active-cat {
+                background-color: #4f46e5 !important;
+                color: white !important;
+                box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+            }
+
+            #chatMessages::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            #chatMessages::-webkit-scrollbar-thumb {
+                background: #e2e8f0;
+                border-radius: 10px;
+            }
+        </style>
+    </head>
+
+    <body class="antialiased">
+
+        <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
+            <div class="max-w-[1440px] mx-auto h-20 px-8 flex items-center justify-between">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
+                    <div
+                        class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <span
+                        class="font-extrabold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">VisualFinder</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="relative cursor-pointer group" onclick="toggleInbox()">
+                        <div class="p-2.5 rounded-full hover:bg-slate-100 transition-all relative">
+                            <svg class="w-7 h-7 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
+                                </path>
+                            </svg>
+                            <div id="inbox-dot"
+                                class="hidden absolute top-2 right-2 w-3 h-3 bg-red-500 border-2 border-white rounded-full">
+                            </div>
+                        </div>
+
+                        <div id="inbox-dropdown"
+                            class="hidden absolute top-full right-0 mt-4 w-80 bg-white border border-slate-100 shadow-2xl rounded-[28px] overflow-hidden z-[150]">
+                            <div class="p-5 border-b border-slate-50 flex justify-between items-center">
+                                <h3 class="font-extrabold text-lg">Входящие</h3>
+                                <span
+                                    class="text-[10px] bg-slate-100 px-2 py-1 rounded-md font-bold text-slate-500 uppercase">Новые</span>
+                            </div>
+                            <div id="inbox-list" class="max-h-[400px] overflow-y-auto py-2 bg-white">
+                                <p class="text-center text-slate-400 py-10 text-xs font-bold uppercase tracking-widest">
+                                    Хабарламалар жоқ</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <button onclick="openCreateModal()"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-indigo-100 active:scale-95">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                                </path>
+                            </svg>
+                            Жарнама қосу
+                        </button>
+                        <div id="user-avatar"
+                            class="w-11 h-11 rounded-full bg-slate-200 border-2 border-white shadow-sm cursor-pointer overflow-hidden transition-transform hover:scale-105"
+                            onclick="window.location.href='profile.html'"></div>
+                    </div>
+                </div>
+        </nav>
+
+        <main class="max-w-[1440px] mx-auto px-8 pt-32 pb-20">
+            <header class="mb-10">
+                <h1 class="text-4xl font-extrabold text-slate-900 mb-2">Жарнамалар</h1>
+                <p class="text-slate-500 font-medium">Мектептегі жоғалған және табылған заттардың бірыңғай базасы</p>
+            </header>
+
+            <div class="flex flex-col md:flex-row gap-4 mb-10">
+                <div class="relative flex-1 group">
+                    <span
+                        class="absolute inset-y-0 left-4 flex items-center text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                    <input id="searchInput" type="text" placeholder="Заттың атын немесе жерін жазыңыз..."
+                        class="w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 ring-indigo-500/5 focus:border-indigo-500/20 transition-all font-medium shadow-sm">
+                </div>
+                <div class="flex gap-2 overflow-x-auto pb-2 hide-scroll" id="categoryFilters">
+                    <button data-type="all"
+                        class="cat-btn active-cat bg-white text-slate-600 px-6 py-4 rounded-2xl font-bold whitespace-nowrap transition-all border border-slate-100">Барлығы</button>
+                    <button data-type="found"
+                        class="cat-btn bg-white text-slate-600 px-6 py-4 rounded-2xl font-bold border border-slate-100 hover:bg-slate-50 whitespace-nowrap transition-all">Табылған</button>
+                    <button data-type="lost"
+                        class="cat-btn bg-white text-slate-600 px-6 py-4 rounded-2xl font-bold border border-slate-100 hover:bg-slate-50 whitespace-nowrap transition-all">Жоғалған</button>
+                </div>
+            </div>
+
+            <div id="itemsGrid" class="items-grid"></div>
+        </main>
+
+        <div id="createModalWrapper" class="fixed inset-0 z-[100] hidden">
+            <div onclick="closeCreateModal()" class="absolute inset-0 modal-blur"></div>
+            <div class="relative flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white w-full max-w-xl rounded-[32px] p-8 shadow-2xl transition-all scale-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-slate-900">Жаңа хабарлама</h2>
+                        <button onclick="closeCreateModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex gap-4 p-1.5 bg-slate-100 rounded-2xl mb-2">
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="itemType" value="found" class="hidden peer" checked>
+                                <div
+                                    class="py-3 text-center rounded-xl font-bold text-sm peer-checked:bg-white peer-checked:text-indigo-600 peer-checked:shadow-sm transition-all text-slate-500">
+                                    Таптым</div>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="itemType" value="lost" class="hidden peer">
+                                <div
+                                    class="py-3 text-center rounded-xl font-bold text-sm peer-checked:bg-white peer-checked:text-indigo-600 peer-checked:shadow-sm transition-all text-slate-500">
+                                    Жоғалттым</div>
+                            </label>
+                        </div>
+
+                        <input id="itemTitle" type="text" placeholder="Заттың атауы (мысалы: AirPods)"
+                            class="w-full bg-slate-50 rounded-2xl p-4 outline-none focus:ring-2 ring-indigo-500/20 font-medium border border-transparent focus:bg-white transition-all">
+                        <input id="itemLocation" type="text" placeholder="Қай жерде? (мысалы: 3-қабат, асхана)"
+                            class="w-full bg-slate-50 rounded-2xl p-4 outline-none focus:ring-2 ring-indigo-500/20 font-medium border border-transparent focus:bg-white transition-all">
+                        <textarea id="userDesc" placeholder="Қосымша мәліметтер..."
+                            class="w-full bg-slate-50 rounded-2xl p-4 h-32 outline-none focus:ring-2 ring-indigo-500/20 resize-none font-medium border border-transparent focus:bg-white transition-all"></textarea>
+
+                        <input type="file" id="fileInput" class="hidden" accept="image/*">
+                        <label for="fileInput"
+                            class="flex flex-col items-center justify-center w-full py-10 bg-slate-50 rounded-[24px] border-2 border-dashed border-slate-200 cursor-pointer hover:bg-slate-100 hover:border-indigo-300 transition-all group">
+                            <svg class="w-8 h-8 text-slate-400 group-hover:text-indigo-500 mb-2 transition-colors"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            <span class="text-sm font-bold text-slate-500 group-hover:text-indigo-600">Фото жүктеу</span>
+                        </label>
+
+                        <div class="flex items-center gap-3 px-2">
+                            <input type="checkbox" id="isAnonymous"
+                                class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm font-medium text-slate-600">Анонимді түрде жариялау</span>
+                        </div>
+
+                        <button onclick="createPost()" id="submitBtn"
+                            class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all mt-4 active:scale-95">Жариялау</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="commentModalWrapper" class="fixed inset-0 z-[110] hidden">
+            <div onclick="closeCommentModal()" class="absolute inset-0 modal-blur"></div>
+            <div class="relative flex items-center justify-center min-h-screen p-4">
+                <div
+                    class="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl flex flex-col h-[80vh] overflow-hidden transition-all">
+                    <div class="p-6 border-b flex justify-between items-center bg-slate-50/50">
+                        <h3 class="text-xl font-bold text-slate-900">Пікірлер</h3>
+                        <button onclick="closeCommentModal()"
+                            class="text-slate-400 hover:text-slate-600 p-2 text-xl">✕</button>
+                    </div>
+                    <div id="commentsList" class="flex-1 overflow-y-auto p-6 space-y-4 hide-scroll"></div>
+                    <div class="p-6 border-t bg-white">
+                        <div id="commentImagePreview" class="hidden mb-3 relative inline-block">
+                            <img id="prevImg" class="h-20 rounded-xl border-2 border-slate-100 shadow-sm">
+                            <button onclick="clearCommentImage()"
+                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center border-2 border-white shadow-sm">✕</button>
+                        </div>
+                        <div
+                            class="flex items-center gap-2 bg-slate-100 p-2 rounded-2xl border-2 border-transparent focus-within:border-indigo-500/20 focus-within:bg-white transition-all">
+                            <input type="file" id="commentFile" class="hidden" accept="image/*"
+                                onchange="previewCommentImage(this)">
+                            <label for="commentFile"
+                                class="p-2 cursor-pointer text-slate-400 hover:text-indigo-600 transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                            </label>
+                            <input id="commentInput" type="text" placeholder="Пікір жазыңыз..."
+                                class="flex-1 bg-transparent border-none outline-none text-sm font-medium px-2">
+                            <button onclick="submitComment()"
+                                class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all active:scale-95 shadow-md">Жіберу</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="chatModalWrapper" class="fixed inset-0 z-[120] hidden">
+            <div onclick="closeChat()" class="absolute inset-0 modal-blur"></div>
+            <div class="relative flex items-center justify-center min-h-screen p-4">
+                <div
+                    class="bg-white w-full max-w-lg rounded-[32px] shadow-2xl flex flex-col h-[85vh] overflow-hidden transition-all">
+                    <div class="p-6 border-b flex justify-between items-center bg-indigo-600 text-white shadow-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg"
+                                id="chatAvatarInit">?</div>
+                            <div>
+                                <h3 id="chatReceiverName" class="text-lg font-bold text-white leading-tight">Чат</h3>
+                                <span class="text-[10px] opacity-80 uppercase tracking-widest font-bold">Тікелей
+                                    байланыс</span>
+                            </div>
+                        </div>
+                        <button onclick="closeChat()"
+                            class="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all">✕</button>
+                    </div>
+                    <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50"></div>
+                    <div class="p-6 border-t bg-white">
+                        <div
+                            class="flex items-center gap-2 bg-slate-100 p-2 rounded-2xl border-2 border-transparent focus-within:border-indigo-500/20 focus-within:bg-white transition-all">
+                            <input id="chatInput" type="text" placeholder="Хабарламаңыз..."
+                                class="flex-1 bg-transparent border-none outline-none px-3 font-medium text-sm">
+                            <button onclick="sendChatMessage()"
+                                class="bg-indigo-600 text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-all shadow-md active:scale-90">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="notification-container" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-3 pointer-events-none">
+        </div>
+
+        <div id="notification-container" class="fixed bottom-6 right-6 z-[999] flex flex-col gap-3 pointer-events-none">
+        </div>
+
+        <template id="notif-template">
+            <div
+                class="notif-item pointer-events-auto bg-white/90 backdrop-blur-xl border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[24px] p-4 flex items-center gap-4 w-85 transform transition-all duration-500 translate-x-full opacity-0">
+                <div class="relative">
+                    <div
+                        class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-indigo-50 shrink-0">
+                        <img class="notif-avatar w-full h-full object-cover hidden">
+                        <div
+                            class="notif-initial w-full h-full flex items-center justify-center text-indigo-600 font-bold text-lg">
+                            ?</div>
+                    </div>
+                    <div
+                        class="absolute -bottom-1 -right-1 w-5 h-5 bg-indigo-600 rounded-full border-2 border-white flex items-center justify-center">
+                        <span class="text-[10px] text-white">💬</span>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <p class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-0.5">Жаңа пікір</p>
+                        <button class="close-notif text-slate-400 hover:text-slate-600 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-sm font-bold text-slate-900 truncate notif-author">Имя пользователя</p>
+                    <p class="text-xs text-slate-500 truncate notif-text">Текст сообщения...</p>
+                </div>
+            </div>
+        </template>
+
+        <style>
+            /* Анимация появления: вылет справа */
+            .notif-show {
+                transform: translateX(0) !important;
+                opacity: 1 !important;
+            }
+        </style>
+
+        <script src="app.js"></script>
+    </body>
+
+    </html>
